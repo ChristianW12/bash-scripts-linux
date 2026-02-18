@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Pfad zur Ladeschwelle
+PATH_GLOB="/sys/class/power_supply/BAT*/charge_control_end_threshold"
+
+# Prüfen, ob Datei existiert
+if ! ls $PATH_GLOB >/dev/null 2>&1; then
+    echo "Dein Gerät unterstützt keine charge_control_end_threshold."
+    exit 1
+fi
+
+# Wenn kein Argument übergeben wurde → anzeigen
+if [ $# -eq 0 ]; then
+    cat $PATH_GLOB
+    exit 0
+fi
+
+# Argument prüfen
+VALUE="$1"
+
+if ! [[ "$VALUE" =~ ^[0-9]+$ ]] || (( VALUE < 1 || VALUE > 100 )); then
+    echo "Bitte eine Zahl zwischen 1 und 100 angeben."
+    exit 2
+fi
+
+# Ladeschwelle setzen
+echo "$VALUE" | sudo tee $PATH_GLOB >/dev/null
+
+echo "Neue Ladeschwelle:"
+cat $PATH_GLOB
